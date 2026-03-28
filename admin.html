@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İnşaat Pro — Admin Fiyat Paneli</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1a14;--sf:#1a2820;--s2:#223322;--bd:#2d4035;
+  --G:#2ecc71;--G2:#27ae60;--GL:rgba(46,204,113,.12);
+  --O:#e67e22;--OL:rgba(230,126,34,.12);
+  --B:#3498db;--BL:rgba(52,152,219,.12);
+  --P:#9b59b6;--PL:rgba(155,89,182,.12);
+  --Y:#f1c40f;--YL:rgba(241,196,15,.1);
+  --R:#e74c3c;--RL:rgba(231,76,60,.12);
+  --T:#e8f5e9;--M:#7a9e8a;
+  --sh:0 4px 20px rgba(0,0,0,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--T);font-family:'DM Sans',sans-serif;min-height:100vh}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at center, #1a2820 0%, #0f1a14 70%)}
+.login-box{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:40px 32px;width:100%;max-width:380px;box-shadow:var(--sh)}
+.login-logo{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--G);margin-bottom:4px;letter-spacing:-1px}
+.login-sub{font-size:.78rem;color:var(--M);margin-bottom:28px}
+.lbl{font-size:.65rem;font-weight:600;color:var(--M);letter-spacing:.9px;text-transform:uppercase;margin-bottom:5px;display:block}
+.inp{width:100%;background:var(--s2);border:1.5px solid var(--bd);color:var(--T);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:.9rem;border-radius:9px;outline:none;transition:border-color .15s;margin-bottom:14px}
+.inp:focus{border-color:var(--G)}
+.btn-login{width:100%;padding:13px;background:var(--G);color:#0f1a14;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;transition:all .15s}
+.btn-login:active{background:var(--G2);transform:scale(.98)}
+.login-err{background:var(--RL);border:1px solid var(--R);color:var(--R);border-radius:8px;padding:9px 12px;font-size:.8rem;margin-bottom:14px;display:none}
+.login-err.show{display:block}
+
+/* MAIN LAYOUT */
+.app{display:none;flex-direction:column;min-height:100vh}
+.app.show{display:flex}
+.topbar{background:var(--sf);border-bottom:1px solid var(--bd);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-logo{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--G);letter-spacing:-.5px}
+.topbar-sub{font-size:.65rem;color:var(--M);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.save-indicator{font-size:.72rem;color:var(--G);opacity:0;transition:opacity .3s;display:flex;align-items:center;gap:4px}
+.save-indicator.show{opacity:1}
+.btn-sm{padding:7px 14px;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;transition:all .15s}
+.btn-logout{background:var(--RL);color:var(--R)}
+.btn-export{background:var(--OL);color:var(--O)}
+
+/* MAIN AREA */
+.main{flex:1;padding:20px;max-width:1200px;margin:0 auto;width:100%}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:16px;text-align:center}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--G)}
+.stat-lbl{font-size:.65rem;color:var(--M);margin-top:3px;letter-spacing:.5px;text-transform:uppercase}
+
+/* TABS */
+.tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 16px;border:1.5px solid var(--bd);border-radius:20px;cursor:pointer;font-size:.78rem;font-weight:500;color:var(--M);background:transparent;white-space:nowrap;transition:all .15s}
+.tab.active{background:var(--G);border-color:var(--G);color:#0f1a14;font-weight:700}
+
+/* CATEGORY SECTION */
+.cat-section{margin-bottom:20px}
+.cat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px}
+.cat-title{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;color:var(--G);letter-spacing:.5px;text-transform:uppercase}
+.cat-count{font-size:.68rem;color:var(--M);background:var(--s2);padding:2px 8px;border-radius:10px}
+
+/* PRICE TABLE */
+.price-table{background:var(--sf);border:1px solid var(--bd);border-radius:12px;overflow:hidden;box-shadow:var(--sh)}
+.pt-head{display:grid;grid-template-columns:3fr 1.2fr 1fr 1fr 1fr 120px;gap:0;background:var(--s2);border-bottom:1px solid var(--bd)}
+.pt-head-cell{padding:9px 12px;font-size:.65rem;font-weight:700;color:var(--M);letter-spacing:.8px;text-transform:uppercase}
+.pt-row{display:grid;grid-template-columns:3fr 1.2fr 1fr 1fr 1fr 120px;gap:0;border-bottom:1px solid rgba(45,64,53,.5);align-items:center;transition:background .1s}
+.pt-row:last-child{border-bottom:none}
+.pt-row:hover{background:var(--GL)}
+.pt-cell{padding:8px 12px;font-size:.82rem}
+.pt-cell.name{font-weight:500;color:var(--T);display:flex;align-items:center;gap:7px}
+.pt-cell.unit{color:var(--M);font-size:.75rem}
+.pt-cell.price{font-family:'Syne',sans-serif;font-weight:700;color:var(--G)}
+.pt-cell.date{font-size:.7rem;color:var(--M)}
+.pt-cell.actions{display:flex;gap:5px}
+.btn-edit{padding:5px 10px;background:var(--BL);color:var(--B);border:none;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:600}
+.btn-del{padding:5px 8px;background:var(--RL);color:var(--R);border:none;border-radius:6px;cursor:pointer;font-size:.72rem}
+.price-tag{font-size:.7rem;color:var(--M);font-weight:400}
+
+/* EDIT MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-bg.hid{display:none}
+.modal{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:28px;width:100%;max-width:480px;box-shadow:var(--sh)}
+.modal-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--G);margin-bottom:18px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-grid.full{grid-template-columns:1fr}
+.form-group{margin-bottom:0}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.btn-save{flex:1;padding:11px;background:var(--G);color:#0f1a14;border:none;border-radius:9px;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer}
+.btn-cancel{flex:1;padding:11px;background:transparent;color:var(--M);border:1.5px solid var(--bd);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.88rem;cursor:pointer}
+.price-change{display:flex;align-items:center;gap:8px;background:var(--s2);border-radius:9px;padding:10px 12px;margin-top:8px}
+.price-change .arrow{font-size:1rem}
+.price-old{color:var(--R);text-decoration:line-through;font-size:.82rem}
+.price-new{color:var(--G);font-family:'Syne',sans-serif;font-weight:700}
+
+/* ADD NEW */
+.add-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--GL);border:1.5px dashed var(--G);border-radius:10px;color:var(--G);cursor:pointer;font-size:.8rem;font-weight:600;width:100%;margin-top:8px;transition:all .15s}
+.add-btn:hover{background:rgba(46,204,113,.2)}
+
+/* SEARCH */
+.search-bar{display:flex;gap:10px;margin-bottom:16px}
+.search-inp{flex:1;background:var(--sf);border:1.5px solid var(--bd);color:var(--T);padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:.88rem;border-radius:10px;outline:none}
+.search-inp:focus{border-color:var(--G)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--G);color:#0f1a14;padding:12px 20px;border-radius:10px;font-weight:600;font-size:.85rem;z-index:1000;transform:translateY(80px);transition:transform .3s;box-shadow:var(--sh)}
+.toast.show{transform:translateY(0)}
+.toast.err{background:var(--R);color:#fff}
+
+/* UPDATE LOG */
+.log-wrap{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:20px}
+.log-title{font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;color:var(--G);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.log-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(45,64,53,.4);font-size:.76rem;color:var(--M)}
+.log-item:last-child{border-bottom:none}
+.log-badge{background:var(--GL);color:var(--G);border-radius:4px;padding:2px 6px;font-size:.65rem;font-weight:700;flex-shrink:0}
+.log-badge.isc{background:var(--OL);color:var(--O)}
+.log-badge.prj{background:var(--PL);color:var(--P)}
+
+/* EXPORT INFO */
+.export-box{background:var(--YL);border:1px solid rgba(241,196,15,.3);border-radius:10px;padding:14px;margin-bottom:20px;font-size:.78rem;color:var(--Y);line-height:1.6}
+.export-box strong{color:var(--Y)}
+
+@media(max-width:700px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .pt-head,.pt-row{grid-template-columns:2fr 0.8fr 0.9fr 0.9fr 0;} 
+  .pt-head .pt-head-cell:nth-child(5),.pt-row .pt-cell:nth-child(5){display:none}
+  .pt-head-cell,.pt-cell{padding:7px 8px;font-size:.75rem}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-logo">⚙️ Admin Panel</div>
+    <div class="login-sub">İnşaat Maliyet Pro — Fiyat Yönetimi</div>
+    <div class="login-err" id="loginErr">❌ Şifre yanlış! Tekrar deneyin.</div>
+    <label class="lbl">Kullanıcı Adı</label>
+    <input class="inp" id="loginUser" type="text" placeholder="admin" autocomplete="username">
+    <label class="lbl">Şifre</label>
+    <input class="inp" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" onclick="doLogin()">🔐 Giriş Yap</button>
+    <div style="margin-top:16px;font-size:.72rem;color:var(--M);text-align:center">
+      Varsayılan: kullanıcı <strong style="color:var(--G)">admin</strong> · şifre <strong style="color:var(--G)">insaat2025</strong><br>
+      <span style="font-size:.68rem">Şifreyi değiştirmek için aşağıdan ayarlar bölümünü kullanın</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="mainApp">
+  <div class="topbar">
+    <div>
+      <div class="topbar-logo">⚙️ Fiyat Yönetim Paneli</div>
+      <div class="topbar-sub">İnşaat Maliyet Pro — Admin</div>
+    </div>
+    <div class="topbar-right">
+      <div class="save-indicator" id="saveInd">✅ Kaydedildi</div>
+      <button class="btn-sm btn-export" onclick="exportPricesJSON()">📥 JSON İndir</button>
+      <button class="btn-sm btn-logout" onclick="doLogout()">Çıkış</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- STATS -->
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- EXPORT INFO -->
+    <div class="export-box">
+      ⚠️ <strong>Nasıl Çalışır?</strong> Burada yaptığın fiyat güncellemeleri tarayıcının yerel hafızasına (localStorage) kaydedilir.
+      Ana uygulama (<code>index.html</code>) her açıldığında önce bu güncellenen fiyatları okur, varsa onları kullanır.
+      Yeni cihaza taşımak için <strong>JSON İndir</strong> → <strong>JSON Yükle</strong> kullan.
+    </div>
+
+    <!-- UPDATE LOG -->
+    <div class="log-wrap">
+      <div class="log-title">📋 Son Güncellemeler</div>
+      <div id="updateLog"></div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-bar">
+      <input class="search-inp" id="searchInp" type="text" placeholder="🔍 Malzeme, işçilik veya proje ara..." oninput="renderAll()">
+      <button class="btn-sm" style="background:var(--GL);color:var(--G)" onclick="document.getElementById('searchInp').value='';renderAll()">Temizle</button>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="setTab('malzeme',this)">🧱 Malzeme</button>
+      <button class="tab" onclick="setTab('iscilik',this)">👷 İşçilik</button>
+      <button class="tab" onclick="setTab('proje',this)">📐 Proje / Ruhsat</button>
+      <button class="tab" onclick="setTab('ayarlar',this)">⚙️ Ayarlar</button>
+    </div>
+
+    <div id="tabContent"></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg hid" id="editModal">
+  <div class="modal">
+    <div class="modal-title" id="editTitle">Fiyat Güncelle</div>
+    <input type="hidden" id="edit_id">
+    <input type="hidden" id="edit_cat">
+    <input type="hidden" id="edit_type">
+    <div class="modal-grid">
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="lbl">Malzeme / Hizmet Adı</label>
+        <input class="inp" id="edit_ad" type="text" placeholder="Ad...">
+      </div>
+      <div class="form-group">
+        <label class="lbl">Birim</label>
+        <input class="inp" id="edit_birim" type="text" placeholder="m², adet, ton...">
+      </div>
+      <div class="form-group">
+        <label class="lbl">İkon (emoji)</label>
+        <input class="inp" id="edit_ic" type="text" placeholder="🏗️">
+      </div>
+      <div class="form-group">
+        <label class="lbl">Min Fiyat (₺)</label>
+        <input class="inp" id="edit_min" type="number" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="lbl">Max Fiyat (₺)</label>
+        <input class="inp" id="edit_max" type="number" min="0" placeholder="0">
+      </div>
+    </div>
+    <div class="price-change" id="priceChangePreview" style="display:none">
+      <span class="price-old" id="pcOld"></span>
+      <span class="arrow">→</span>
+      <span class="price-new" id="pcNew"></span>
+      <span style="font-size:.7rem;color:var(--M)" id="pcDiff"></span>
+    </div>
+    <div id="edit_min_display" style="font-size:.7rem;color:var(--M);margin-top:6px"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEdit()">İptal</button>
+      <button class="btn-save" onclick="saveEdit()">💾 Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-bg hid" id="addModal">
+  <div class="modal">
+    <div class="modal-title">➕ Yeni Kalem Ekle</div>
+    <input type="hidden" id="add_cat">
+    <input type="hidden" id="add_type">
+    <div class="modal-grid">
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="lbl">Malzeme / Hizmet Adı</label>
+        <input class="inp" id="add_ad" type="text" placeholder="Yeni kalem adı...">
+      </div>
+      <div class="form-group">
+        <label class="lbl">Birim</label>
+        <input class="inp" id="add_birim" type="text" placeholder="m², adet, ton...">
+      </div>
+      <div class="form-group">
+        <label class="lbl">İkon (emoji)</label>
+        <input class="inp" id="add_ic" type="text" placeholder="🏗️">
+      </div>
+      <div class="form-group">
+        <label class="lbl">Min Fiyat (₺)</label>
+        <input class="inp" id="add_min" type="number" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="lbl">Max Fiyat (₺)</label>
+        <input class="inp" id="add_max" type="number" min="0" placeholder="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('addModal').classList.add('hid')">İptal</button>
+      <button class="btn-save" onclick="saveAdd()">➕ Ekle</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// AUTH
+// ============================================================
+const CREDS_KEY='insaat_admin_creds';
+const LOG_KEY='insaat_price_log';
+const PRICES_KEY='insaat_prices_v5';
+
+function getCreds(){
+  try{return JSON.parse(localStorage.getItem(CREDS_KEY))||{user:'admin',pass:'insaat2025'};}
+  catch{return{user:'admin',pass:'insaat2025'};}
+}
+
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const creds=getCreds();
+  if(u===creds.user&&p===creds.pass){
+    sessionStorage.setItem('insaat_admin_auth','1');
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('mainApp').classList.add('show');
+    initApp();
+  } else {
+    document.getElementById('loginErr').classList.add('show');
+    document.getElementById('loginPass').value='';
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem('insaat_admin_auth');
+  location.reload();
+}
+
+// ============================================================
+// DATA — varsayılan fiyatlar (index.html ile aynı)
+// ============================================================
+const DEFAULT_PRICES = {
+  malzeme:{
+    "Çimento & Bağlayıcı":[
+      {id:"c1",ad:"Portland Çimentosu 42.5R",birim:"ton",min:4200,max:5200,ic:"🏗️"},
+      {id:"c2",ad:"Beyaz Çimento 52.5",birim:"torba 50kg",min:180,max:230,ic:"🏗️"},
+      {id:"c3",ad:"Alçı Sıva",birim:"torba 25kg",min:80,max:130,ic:"🏗️"},
+      {id:"c4",ad:"Kireç (Söndürülmüş)",birim:"torba 25kg",min:60,max:90,ic:"🏗️"},
+    ],
+    "Agrega":[
+      {id:"a1",ad:"İnşaat Kumu",birim:"m³",min:350,max:550,ic:"⛏️"},
+      {id:"a2",ad:"İnce Kum (Sıva)",birim:"m³",min:300,max:450,ic:"⛏️"},
+      {id:"a3",ad:"Dere Çakılı 0-25mm",birim:"m³",min:400,max:600,ic:"⛏️"},
+      {id:"a4",ad:"Kırma Taş 0-25mm",birim:"m³",min:450,max:650,ic:"⛏️"},
+    ],
+    "Demir & Çelik":[
+      {id:"d1",ad:"İnşaat Demiri Φ8",birim:"ton",min:26000,max:30000,ic:"🔩"},
+      {id:"d2",ad:"İnşaat Demiri Φ10",birim:"ton",min:25500,max:29500,ic:"🔩"},
+      {id:"d3",ad:"İnşaat Demiri Φ12",birim:"ton",min:25000,max:29000,ic:"🔩"},
+      {id:"d4",ad:"İnşaat Demiri Φ16",birim:"ton",min:25500,max:29500,ic:"🔩"},
+      {id:"d5",ad:"İnşaat Demiri Φ20",birim:"ton",min:26000,max:30000,ic:"🔩"},
+    ],
+    "Beton":[
+      {id:"b1",ad:"Hazır Beton C20/25",birim:"m³",min:2500,max:3200,ic:"🏗️"},
+      {id:"b2",ad:"Hazır Beton C25/30",birim:"m³",min:2800,max:3800,ic:"🏗️"},
+      {id:"b3",ad:"Hazır Beton C30/37",birim:"m³",min:3000,max:4000,ic:"🏗️"},
+    ],
+    "Duvar":[
+      {id:"du1",ad:"Delikli Tuğla",birim:"adet",min:3.5,max:5.5,ic:"🧱"},
+      {id:"du2",ad:"Ytong / Gaz Beton",birim:"m³",min:2800,max:3600,ic:"🧱"},
+      {id:"du3",ad:"Bims Blok",birim:"adet",min:15,max:22,ic:"🧱"},
+      {id:"du4",ad:"Alçıpan 12.5mm",birim:"m²",min:90,max:140,ic:"🧱"},
+    ],
+    "Döşeme & Kaplama":[
+      {id:"k1",ad:"Seramik Zemin 40x40",birim:"m²",min:150,max:320,ic:"🏠"},
+      {id:"k2",ad:"Porselen Karo 60x60",birim:"m²",min:200,max:520,ic:"🏠"},
+      {id:"k3",ad:"Laminant Parke",birim:"m²",min:150,max:380,ic:"🏠"},
+      {id:"k4",ad:"Meşe Masif Parke",birim:"m²",min:800,max:1600,ic:"🏠"},
+      {id:"k5",ad:"Mermer Döşeme",birim:"m²",min:400,max:950,ic:"🏠"},
+    ],
+    "Mermer & Taş":[
+      {id:"m1",ad:"Mutfak Mermer Tezgahı 2cm",birim:"metre",min:1200,max:2800,ic:"🍳"},
+      {id:"m2",ad:"Mutfak Mermer Tezgahı 3cm",birim:"metre",min:1600,max:3500,ic:"🍳"},
+      {id:"m4",ad:"Denizlik Mermeri (Afyon Beyaz)",birim:"metre",min:800,max:1600,ic:"🏛️"},
+      {id:"m6",ad:"Bina Merdiven Basamağı (Mermer)",birim:"adet",min:600,max:1400,ic:"🪜"},
+      {id:"m10",ad:"Merdiven Seramik Kaplama",birim:"m²",min:150,max:380,ic:"🪜"},
+    ],
+    "Merdiven & Korkuluk":[
+      {id:"mr1",ad:"Çelik Korkuluk (Boyalı)",birim:"metre",min:800,max:1800,ic:"🪜"},
+      {id:"mr2",ad:"Paslanmaz Çelik Korkuluk",birim:"metre",min:1500,max:4000,ic:"🪜"},
+      {id:"mr4",ad:"Cam Balustrat",birim:"metre",min:2500,max:6000,ic:"🪟"},
+      {id:"mr5",ad:"Balkon Korkuluğu (Demir Profil)",birim:"metre",min:700,max:1600,ic:"🏠"},
+    ],
+    "Asma Tavan":[
+      {id:"at1",ad:"Alçıpan Asma Tavan Düz",birim:"m²",min:200,max:380,ic:"🔲"},
+      {id:"at2",ad:"Alçıpan Asma Tavan Kademeli",birim:"m²",min:280,max:500,ic:"🔲"},
+      {id:"at5",ad:"Gergi Tavan (Streç)",birim:"m²",min:350,max:700,ic:"🔲"},
+      {id:"at7",ad:"Metal Kaset Tavan (60x60)",birim:"m²",min:250,max:550,ic:"🔲"},
+    ],
+    "Elektrik":[
+      {id:"e1",ad:"NYM Kablo 3x2.5mm²",birim:"metre",min:20,max:38,ic:"⚡"},
+      {id:"e2",ad:"NYM Kablo 3x4mm²",birim:"metre",min:30,max:55,ic:"⚡"},
+      {id:"e3",ad:"NYM Kablo 3x6mm²",birim:"metre",min:45,max:80,ic:"⚡"},
+      {id:"e5",ad:"Otomatik Sigorta",birim:"adet",min:80,max:160,ic:"⚡"},
+      {id:"e7",ad:"Elektrik Panosu",birim:"adet",min:800,max:2500,ic:"⚡"},
+      {id:"e8",ad:"Topraklı Priz",birim:"adet",min:60,max:150,ic:"🔌"},
+    ],
+    "Armatür & Lamba":[
+      {id:"l1",ad:"LED Spot Armatür (Alçıpan)",birim:"adet",min:80,max:250,ic:"💡"},
+      {id:"l3",ad:"Panel LED Armatür (60x60)",birim:"adet",min:400,max:900,ic:"💡"},
+      {id:"l5",ad:"Avize (Orta Boy)",birim:"adet",min:1000,max:8000,ic:"💡"},
+      {id:"l6",ad:"Dış Mekan Aplik",birim:"adet",min:300,max:1500,ic:"💡"},
+      {id:"l10",ad:"LED Şerit (5mt Rulo)",birim:"rulo",min:150,max:500,ic:"💡"},
+    ],
+    "Mekanik":[
+      {id:"mek1",ad:"Radyatör Panel 600x1000",birim:"adet",min:1800,max:3500,ic:"♨️"},
+      {id:"mek2",ad:"Yerden Isıtma Borusu (PEX)",birim:"m²",min:120,max:220,ic:"♨️"},
+      {id:"mek7",ad:"Klima Duvar Tipi 12000 BTU",birim:"adet",min:8000,max:18000,ic:"❄️"},
+      {id:"mek8",ad:"Klima Kaset Tipi 24000 BTU",birim:"adet",min:15000,max:35000,ic:"❄️"},
+    ],
+    "Doğalgaz":[
+      {id:"g1",ad:"Doğalgaz Borusu 1/2\"",birim:"metre",min:80,max:140,ic:"🔥"},
+      {id:"g3",ad:"Kombi",birim:"adet",min:8000,max:25000,ic:"🔥"},
+      {id:"g4",ad:"Doğalgaz Bağlantı Malzeme",birim:"daire",min:1200,max:2800,ic:"🔥"},
+    ],
+    "Mutfak & Dolap":[
+      {id:"mut1",ad:"Mutfak Dolabı (Alt+Üst) Hazır",birim:"metre boy",min:3500,max:7000,ic:"🍳"},
+      {id:"mut2",ad:"Mutfak Dolabı Özel İmalat",birim:"metre boy",min:6000,max:15000,ic:"🍳"},
+      {id:"mut3",ad:"Vestiyer Dolabı Hazır",birim:"kapak m²",min:2500,max:5500,ic:"👔"},
+      {id:"mut4",ad:"Vestiyer Dolabı Özel",birim:"kapak m²",min:4500,max:10000,ic:"👔"},
+      {id:"mut7",ad:"Ankastre Fırın",birim:"adet",min:5000,max:18000,ic:"🍳"},
+    ],
+    "Tesisat":[
+      {id:"t1",ad:"PPR Boru Ø20",birim:"metre",min:30,max:55,ic:"🔧"},
+      {id:"t2",ad:"Bakır Boru Ø15",birim:"metre",min:80,max:130,ic:"🔧"},
+      {id:"t5",ad:"WC Grubu Komple",birim:"adet",min:2500,max:8000,ic:"🔧"},
+    ],
+    "Doğrama":[
+      {id:"do1",ad:"PVC Pencere 120x120",birim:"adet",min:4000,max:7500,ic:"🪟"},
+      {id:"do2",ad:"Alüminyum Doğrama",birim:"m²",min:2500,max:5000,ic:"🪟"},
+      {id:"do3",ad:"Ahşap İç Kapı",birim:"adet",min:3000,max:9000,ic:"🚪"},
+      {id:"do4",ad:"Çelik Giriş Kapısı",birim:"adet",min:6000,max:18000,ic:"🚪"},
+    ],
+  },
+  iscilik:{
+    "Kaba Yapı":[
+      {id:"i1",ad:"Kalıpçı İşçiliği",birim:"m²",min:450,max:800,ic:"👷"},
+      {id:"i2",ad:"Betoncu İşçiliği",birim:"m³",min:400,max:700,ic:"👷"},
+      {id:"i3",ad:"Demirci / Demir Bağlama",birim:"ton",min:2500,max:4000,ic:"👷"},
+      {id:"i4",ad:"Duvar Örme (Tuğla)",birim:"m²",min:180,max:320,ic:"🧱"},
+      {id:"i5",ad:"Duvar Örme (Ytong)",birim:"m²",min:200,max:380,ic:"🧱"},
+      {id:"i6",ad:"Kazı / Hafriyat",birim:"m³",min:150,max:350,ic:"⛏️"},
+    ],
+    "Sıva & Alçı":[
+      {id:"i8",ad:"İç Çimento Sıvası",birim:"m²",min:120,max:220,ic:"🏗️"},
+      {id:"i9",ad:"Dış Çimento Sıvası",birim:"m²",min:150,max:280,ic:"🏗️"},
+      {id:"i10",ad:"Alçı Sıva İşçiliği",birim:"m²",min:100,max:180,ic:"🏗️"},
+      {id:"i12",ad:"Dış Cephe Mantolama",birim:"m²",min:180,max:320,ic:"🏗️"},
+    ],
+    "Kaplama":[
+      {id:"i13",ad:"Zemin Seramik Döşeme",birim:"m²",min:120,max:220,ic:"🏠"},
+      {id:"i14",ad:"Duvar Seramik Döşeme",birim:"m²",min:140,max:260,ic:"🏠"},
+      {id:"i15",ad:"Parke Döşeme",birim:"m²",min:100,max:200,ic:"🏠"},
+      {id:"i16",ad:"Mermer Döşeme",birim:"m²",min:200,max:400,ic:"🏠"},
+      {id:"i17",ad:"Mutfak Mermer Tezgah Montajı",birim:"metre",min:400,max:800,ic:"🍳"},
+      {id:"i18",ad:"Denizlik Mermer Montajı",birim:"metre",min:200,max:450,ic:"🏛️"},
+      {id:"i19",ad:"Basamak Mermer Montajı",birim:"adet",min:150,max:350,ic:"🪜"},
+      {id:"i20",ad:"Merdiven Seramik Kaplama",birim:"m²",min:130,max:240,ic:"🪜"},
+    ],
+    "Merdiven & Korkuluk":[
+      {id:"i21",ad:"Çelik Korkuluk İmalat+Montaj",birim:"metre",min:600,max:1400,ic:"🪜"},
+      {id:"i22",ad:"Pas. Çelik Korkuluk Montajı",birim:"metre",min:800,max:1800,ic:"🪜"},
+      {id:"i23",ad:"Cam Balustrat Montajı",birim:"metre",min:800,max:2000,ic:"🪟"},
+      {id:"i24",ad:"Balkon Korkuluk Montajı",birim:"metre",min:400,max:1000,ic:"🏠"},
+    ],
+    "Asma Tavan":[
+      {id:"i26",ad:"Alçıpan Asma Tavan Düz",birim:"m²",min:150,max:280,ic:"🔲"},
+      {id:"i27",ad:"Alçıpan Asma Tavan Kademeli",birim:"m²",min:200,max:380,ic:"🔲"},
+      {id:"i29",ad:"Gergi Tavan Montajı",birim:"m²",min:200,max:450,ic:"🔲"},
+      {id:"i32",ad:"Tavan Spot Delik Açma",birim:"adet",min:30,max:80,ic:"💡"},
+    ],
+    "Tesisat":[
+      {id:"i33",ad:"Su Tesisatı İşçiliği",birim:"m²",min:200,max:380,ic:"🔧"},
+      {id:"i34",ad:"Pis Su Tesisatı",birim:"m²",min:120,max:220,ic:"🔧"},
+      {id:"i35",ad:"Isıtma Tesisatı (Radyatör)",birim:"m²",min:250,max:450,ic:"♨️"},
+      {id:"i37",ad:"Banyo/WC Ekipman Montajı",birim:"adet",min:1200,max:2500,ic:"🔧"},
+    ],
+    "Doğalgaz":[
+      {id:"i38",ad:"Doğalgaz İç Tesisat",birim:"m²",min:80,max:160,ic:"🔥"},
+      {id:"i39",ad:"Kombi Montajı",birim:"adet",min:800,max:1800,ic:"🔥"},
+      {id:"i40",ad:"Doğalgaz Abonelik+Sayaç",birim:"daire",min:2500,max:5000,ic:"🔥"},
+    ],
+    "Elektrik":[
+      {id:"i42",ad:"Elektrik Tesisat (Ham)",birim:"m²",min:180,max:320,ic:"⚡"},
+      {id:"i43",ad:"Elektrik Tesisat (Bitti)",birim:"m²",min:280,max:480,ic:"⚡"},
+      {id:"i44",ad:"Pano Montaj+Bağlantı",birim:"adet",min:800,max:1800,ic:"⚡"},
+      {id:"i45",ad:"Priz/Anahtar Montajı",birim:"adet",min:80,max:180,ic:"🔌"},
+      {id:"i46",ad:"Armatür/Lamba Montajı",birim:"adet",min:100,max:250,ic:"💡"},
+      {id:"i47",ad:"Spot Çakma (Asma Tavana)",birim:"adet",min:60,max:150,ic:"💡"},
+    ],
+    "Mekanik":[
+      {id:"i49",ad:"Isıtma Sistemi İşçiliği",birim:"m²",min:300,max:550,ic:"♨️"},
+      {id:"i50",ad:"Klima Montajı",birim:"adet",min:800,max:1800,ic:"❄️"},
+      {id:"i51",ad:"Fan-Coil Montajı",birim:"adet",min:1200,max:2500,ic:"❄️"},
+    ],
+    "Boya":[
+      {id:"i57",ad:"İç Boya+Badana",birim:"m²",min:50,max:110,ic:"🎨"},
+      {id:"i58",ad:"Dış Cephe Boya",birim:"m²",min:80,max:160,ic:"🎨"},
+    ],
+    "Mutfak & Dolap":[
+      {id:"i60",ad:"Mutfak Dolabı Montajı",birim:"metre boy",min:300,max:650,ic:"🍳"},
+      {id:"i61",ad:"Vestiyer/Gardırop Montajı",birim:"m²",min:200,max:500,ic:"👔"},
+      {id:"i63",ad:"Ankastre Ekipman Montajı",birim:"adet",min:300,max:700,ic:"🍳"},
+    ],
+    "Genel":[
+      {id:"i64",ad:"Temizlik/Enkaz Taşıma",birim:"m²",min:30,max:80,ic:"🧹"},
+      {id:"i65",ad:"Usta Günlük",birim:"gün",min:1200,max:2200,ic:"👷"},
+      {id:"i66",ad:"Yardımcı İşçi Günlük",birim:"gün",min:700,max:1200,ic:"👷"},
+    ],
+  },
+  proje:{
+    "Mimari":[
+      {id:"p1",ad:"Mimari Ön Proje",birim:"m²",min:80,max:200,ic:"📐"},
+      {id:"p2",ad:"Mimari Uygulama Projesi",birim:"m²",min:120,max:300,ic:"📐"},
+      {id:"p4",ad:"İç Mimari / Dekorasyon Projesi",birim:"m²",min:100,max:280,ic:"🎨"},
+    ],
+    "Statik":[
+      {id:"p6",ad:"Statik / Betonarme Projesi",birim:"m²",min:60,max:160,ic:"🏗️"},
+      {id:"p7",ad:"Zemin Etüt Raporu",birim:"adet",min:5000,max:18000,ic:"🔬"},
+    ],
+    "Elektrik Projesi":[
+      {id:"p9",ad:"Elektrik Tesisat Projesi",birim:"m²",min:25,max:70,ic:"⚡"},
+      {id:"p11",ad:"Güçlü Akım Projesi",birim:"daire",min:1500,max:4000,ic:"⚡"},
+    ],
+    "Mekanik Proje":[
+      {id:"p13",ad:"Sıhhi Tesisat Projesi",birim:"m²",min:20,max:55,ic:"🔧"},
+      {id:"p14",ad:"Isıtma Projesi",birim:"m²",min:25,max:65,ic:"♨️"},
+      {id:"p15",ad:"HVAC Projesi",birim:"m²",min:30,max:80,ic:"🌬️"},
+    ],
+    "Doğalgaz Projesi":[
+      {id:"p17",ad:"Doğalgaz İç Tesisat Projesi",birim:"m²",min:15,max:40,ic:"🔥"},
+      {id:"p19",ad:"IGDAŞ/GAZDAŞ Bağlantı Ücreti",birim:"daire",min:3000,max:8000,ic:"🔥"},
+    ],
+    "Ruhsat & Harç":[
+      {id:"p20",ad:"İnşaat Ruhsatı Harç+Belediye",birim:"m²",min:80,max:200,ic:"📋"},
+      {id:"p21",ad:"Yapı Denetim Ücreti",birim:"m²",min:50,max:120,ic:"📋"},
+      {id:"p22",ad:"İskan (Yapı Kullanım İzni)",birim:"m²",min:20,max:60,ic:"📋"},
+    ],
+    "Müşavirlik":[
+      {id:"p24",ad:"Proje Yönetimi",birim:"m²",min:100,max:250,ic:"👔"},
+      {id:"p25",ad:"Kontrollük Hizmet Bedeli",birim:"m²",min:60,max:150,ic:"👔"},
+    ],
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let prices={};
+let curTab='malzeme';
+let editingItem=null;
+
+function getPrices(){
+  try{
+    const saved=localStorage.getItem(PRICES_KEY);
+    if(saved)return JSON.parse(saved);
+  }catch{}
+  return JSON.parse(JSON.stringify(DEFAULT_PRICES));
+}
+function savePrices(){
+  localStorage.setItem(PRICES_KEY,JSON.stringify(prices));
+  const ind=document.getElementById('saveInd');
+  ind.classList.add('show');
+  setTimeout(()=>ind.classList.remove('show'),2500);
+}
+function getLog(){try{return JSON.parse(localStorage.getItem(LOG_KEY)||'[]');}catch{return[];}}
+function addLog(type,name,oldMin,oldMax,newMin,newMax){
+  const log=getLog();
+  log.unshift({type,name,oldMin,oldMax,newMin,newMax,date:new Date().toLocaleString('tr-TR')});
+  localStorage.setItem(LOG_KEY,JSON.stringify(log.slice(0,20)));
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function initApp(){
+  prices=getPrices();
+  renderStats();
+  renderLog();
+  setTab('malzeme',document.querySelector('.tab.active'));
+  // check auth
+  if(!sessionStorage.getItem('insaat_admin_auth'))location.reload();
+}
+
+function renderStats(){
+  let totMal=0,totIsc=0,totPrj=0,totAll=0;
+  Object.values(prices.malzeme||{}).forEach(arr=>{totMal+=arr.length;totAll+=arr.length;});
+  Object.values(prices.iscilik||{}).forEach(arr=>{totIsc+=arr.length;totAll+=arr.length;});
+  Object.values(prices.proje||{}).forEach(arr=>{totPrj+=arr.length;totAll+=arr.length;});
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat-card"><div class="stat-val" style="color:var(--B)">${totMal}</div><div class="stat-lbl">🧱 Malzeme Kalemi</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--O)">${totIsc}</div><div class="stat-lbl">👷 İşçilik Kalemi</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--P)">${totPrj}</div><div class="stat-lbl">📐 Proje Kalemi</div></div>
+    <div class="stat-card"><div class="stat-val">${totAll}</div><div class="stat-lbl">📊 Toplam Kalem</div></div>`;
+}
+
+function renderLog(){
+  const log=getLog();
+  const el=document.getElementById('updateLog');
+  if(!log.length){el.innerHTML='<div style="font-size:.75rem;color:var(--M);padding:6px 0">Henüz güncelleme yapılmadı.</div>';return;}
+  const typeBadge=t=>t==='malzeme'?'':'iscilik'?'<span class="log-badge isc">İŞÇİLİK</span>':'<span class="log-badge prj">PROJE</span>';
+  el.innerHTML=log.slice(0,8).map(l=>`
+    <div class="log-item">
+      <span class="log-badge${l.type==='iscilik'?' isc':l.type==='proje'?' prj':''}">${l.type==='malzeme'?'MALZEME':l.type==='iscilik'?'İŞÇİLİK':'PROJE'}</span>
+      <span style="flex:1;color:var(--T)">${l.name}</span>
+      <span style="color:var(--R);text-decoration:line-through;font-size:.7rem">${fTLR(l.oldMin,l.oldMax)}</span>
+      <span style="margin:0 4px;color:var(--M)">→</span>
+      <span style="color:var(--G);font-weight:600;font-size:.76rem">${fTLR(l.newMin,l.newMax)}</span>
+      <span style="color:var(--M);font-size:.66rem;margin-left:6px">${l.date}</span>
+    </div>`).join('');
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function setTab(tab,btn){
+  curTab=tab;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderAll();
+}
+
+function renderAll(){
+  const q=(document.getElementById('searchInp')?.value||'').toLowerCase();
+  if(curTab==='ayarlar'){renderAyarlar();return;}
+  const data=prices[curTab]||{};
+  const typeLabel=curTab==='malzeme'?'malzeme':curTab==='iscilik'?'iscilik':'proje';
+  let html='';
+  Object.entries(data).forEach(([cat,items])=>{
+    const filtered=q?items.filter(it=>it.ad.toLowerCase().includes(q)||cat.toLowerCase().includes(q)):items;
+    if(!filtered.length)return;
+    const clr=curTab==='malzeme'?'var(--B)':curTab==='iscilik'?'var(--O)':'var(--P)';
+    html+=`<div class="cat-section">
+      <div class="cat-header">
+        <div class="cat-title">${cat}</div>
+        <div class="cat-count">${filtered.length} kalem</div>
+      </div>
+      <div class="price-table">
+        <div class="pt-head">
+          <div class="pt-head-cell">Malzeme / Hizmet</div>
+          <div class="pt-head-cell">Birim</div>
+          <div class="pt-head-cell">Min (₺)</div>
+          <div class="pt-head-cell">Max (₺)</div>
+          <div class="pt-head-cell">Son Güncelleme</div>
+          <div class="pt-head-cell">İşlem</div>
+        </div>
+        ${filtered.map(it=>`
+          <div class="pt-row">
+            <div class="pt-cell name">${it.ic} ${it.ad}</div>
+            <div class="pt-cell unit">${it.birim}</div>
+            <div class="pt-cell price" style="color:${clr}">${fN(it.min)} ₺</div>
+            <div class="pt-cell price" style="color:${clr}">${fN(it.max)} ₺</div>
+            <div class="pt-cell date">${it.updated||'—'}</div>
+            <div class="pt-cell actions">
+              <button class="btn-edit" onclick="openEdit('${it.id}','${cat}','${typeLabel}')">✏️ Düzenle</button>
+              <button class="btn-del" onclick="delItem('${it.id}','${cat}','${typeLabel}')" title="Sil">✕</button>
+            </div>
+          </div>`).join('')}
+      </div>
+      <button class="add-btn" onclick="openAdd('${cat}','${typeLabel}')">+ Yeni kalem ekle</button>
+    </div>`;
+  });
+  if(!html)html='<div class="empty" style="text-align:center;padding:40px;color:var(--M)">Sonuç bulunamadı.</div>';
+  document.getElementById('tabContent').innerHTML=html;
+}
+
+// ============================================================
+// EDIT
+// ============================================================
+function openEdit(id,cat,type){
+  const data=prices[type];
+  if(!data||!data[cat])return;
+  const item=data[cat].find(x=>x.id===id);
+  if(!item)return;
+  editingItem={id,cat,type,oldMin:item.min,oldMax:item.max};
+  document.getElementById('editTitle').textContent=`✏️ ${item.ad}`;
+  document.getElementById('edit_id').value=id;
+  document.getElementById('edit_cat').value=cat;
+  document.getElementById('edit_type').value=type;
+  document.getElementById('edit_ad').value=item.ad;
+  document.getElementById('edit_birim').value=item.birim;
+  document.getElementById('edit_ic').value=item.ic||'🏗️';
+  document.getElementById('edit_min').value=item.min;
+  document.getElementById('edit_max').value=item.max;
+  document.getElementById('priceChangePreview').style.display='none';
+  document.getElementById('edit_min').oninput=updatePreview;
+  document.getElementById('edit_max').oninput=updatePreview;
+  document.getElementById('editModal').classList.remove('hid');
+}
+
+function updatePreview(){
+  if(!editingItem)return;
+  const nMin=parseFloat(document.getElementById('edit_min').value)||0;
+  const nMax=parseFloat(document.getElementById('edit_max').value)||0;
+  const box=document.getElementById('priceChangePreview');
+  if(nMin!==editingItem.oldMin||nMax!==editingItem.oldMax){
+    box.style.display='flex';
+    document.getElementById('pcOld').textContent=`${fN(editingItem.oldMin)}–${fN(editingItem.oldMax)} ₺`;
+    document.getElementById('pcNew').textContent=`${fN(nMin)}–${fN(nMax)} ₺`;
+    const avgOld=(editingItem.oldMin+editingItem.oldMax)/2;
+    const avgNew=(nMin+nMax)/2;
+    const diff=avgOld>0?Math.round((avgNew-avgOld)/avgOld*100):0;
+    const diffEl=document.getElementById('pcDiff');
+    diffEl.textContent=diff>=0?`(+%${diff} artış)`:`(%${Math.abs(diff)} düşüş)`;
+    diffEl.style.color=diff>=0?'var(--O)':'var(--G)';
+  } else {
+    box.style.display='none';
+  }
+}
+
+function saveEdit(){
+  const id=document.getElementById('edit_id').value;
+  const cat=document.getElementById('edit_cat').value;
+  const type=document.getElementById('edit_type').value;
+  const ad=document.getElementById('edit_ad').value.trim();
+  const birim=document.getElementById('edit_birim').value.trim();
+  const ic=document.getElementById('edit_ic').value.trim()||'🏗️';
+  const min=parseFloat(document.getElementById('edit_min').value)||0;
+  const max=parseFloat(document.getElementById('edit_max').value)||0;
+  if(!ad||!birim){showToast('❌ Ad ve birim zorunlu!',true);return;}
+  if(min>max){showToast('❌ Min fiyat max\'tan büyük olamaz!',true);return;}
+  const arr=prices[type][cat];
+  const idx=arr.findIndex(x=>x.id===id);
+  if(idx===-1)return;
+  addLog(type,arr[idx].ad,arr[idx].min,arr[idx].max,min,max);
+  arr[idx]={...arr[idx],ad,birim,ic,min,max,updated:new Date().toLocaleDateString('tr-TR')};
+  savePrices();
+  closeEdit();
+  renderAll();
+  renderLog();
+  renderStats();
+  showToast(`✅ "${ad}" güncellendi`);
+}
+
+function closeEdit(){
+  document.getElementById('editModal').classList.add('hid');
+  editingItem=null;
+}
+
+// ============================================================
+// ADD
+// ============================================================
+function openAdd(cat,type){
+  document.getElementById('add_cat').value=cat;
+  document.getElementById('add_type').value=type;
+  document.getElementById('add_ad').value='';
+  document.getElementById('add_birim').value='';
+  document.getElementById('add_ic').value='🏗️';
+  document.getElementById('add_min').value='';
+  document.getElementById('add_max').value='';
+  document.getElementById('addModal').classList.remove('hid');
+}
+function saveAdd(){
+  const cat=document.getElementById('add_cat').value;
+  const type=document.getElementById('add_type').value;
+  const ad=document.getElementById('add_ad').value.trim();
+  const birim=document.getElementById('add_birim').value.trim();
+  const ic=document.getElementById('add_ic').value.trim()||'🏗️';
+  const min=parseFloat(document.getElementById('add_min').value)||0;
+  const max=parseFloat(document.getElementById('add_max').value)||0;
+  if(!ad||!birim){showToast('❌ Ad ve birim zorunlu!',true);return;}
+  const id=type[0]+'_new_'+Date.now();
+  prices[type][cat].push({id,ad,birim,ic,min,max,updated:new Date().toLocaleDateString('tr-TR')});
+  savePrices();
+  document.getElementById('addModal').classList.add('hid');
+  renderAll();renderStats();
+  showToast(`✅ "${ad}" eklendi`);
+}
+
+// ============================================================
+// DELETE
+// ============================================================
+function delItem(id,cat,type){
+  const item=prices[type][cat].find(x=>x.id===id);
+  if(!item)return;
+  if(!confirm(`"${item.ad}" silinsin mi?`))return;
+  prices[type][cat]=prices[type][cat].filter(x=>x.id!==id);
+  savePrices();renderAll();renderStats();
+  showToast(`🗑️ "${item.ad}" silindi`);
+}
+
+// ============================================================
+// AYARLAR
+// ============================================================
+function renderAyarlar(){
+  document.getElementById('tabContent').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:700px">
+      <div class="log-wrap" style="grid-column:1/-1">
+        <div class="log-title">🔐 Şifre Değiştir</div>
+        <div class="fr" style="margin-bottom:10px"><label class="lbl">Yeni Kullanıcı Adı</label><input class="inp" id="new_user" type="text" placeholder="admin"></div>
+        <div class="fr" style="margin-bottom:10px"><label class="lbl">Yeni Şifre (min 6 karakter)</label><input class="inp" id="new_pass" type="password" placeholder="••••••••"></div>
+        <div class="fr" style="margin-bottom:14px"><label class="lbl">Şifre Tekrar</label><input class="inp" id="new_pass2" type="password" placeholder="••••••••"></div>
+        <button class="btn-login" onclick="changeCreds()" style="max-width:200px">💾 Şifreyi Güncelle</button>
+      </div>
+      <div class="log-wrap">
+        <div class="log-title">📥 Fiyatları JSON Olarak İndir</div>
+        <p style="font-size:.76rem;color:var(--M);margin-bottom:12px;line-height:1.5">Tüm fiyat verilerini JSON dosyası olarak indirin. Yeni cihaza aktarmak veya yedeklemek için kullanın.</p>
+        <button class="btn-sm btn-export" style="padding:10px 16px;font-size:.82rem" onclick="exportPricesJSON()">📥 JSON İndir</button>
+      </div>
+      <div class="log-wrap">
+        <div class="log-title">📤 JSON'dan Fiyat Yükle</div>
+        <p style="font-size:.76rem;color:var(--M);margin-bottom:12px;line-height:1.5">Önceden indirilen JSON dosyasını yükleyerek fiyatları geri yükleyin veya başka bir cihazdan aktarın.</p>
+        <input type="file" id="jsonFile" accept=".json" style="display:none" onchange="importJSON(this)">
+        <button class="btn-sm" style="background:var(--GL);color:var(--G);padding:10px 16px;font-size:.82rem" onclick="document.getElementById('jsonFile').click()">📤 JSON Yükle</button>
+      </div>
+      <div class="log-wrap" style="grid-column:1/-1">
+        <div class="log-title">🔄 Varsayılan Fiyatlara Sıfırla</div>
+        <p style="font-size:.76rem;color:var(--M);margin-bottom:12px;line-height:1.5">Tüm fiyatları ilk yüklendiği değerlere sıfırlar. Bu işlem geri alınamaz.</p>
+        <button class="btn-sm" style="background:var(--RL);color:var(--R);padding:10px 16px;font-size:.82rem" onclick="resetPrices()">⚠️ Sıfırla (Dikkat!)</button>
+      </div>
+    </div>`;
+}
+function changeCreds(){
+  const u=document.getElementById('new_user').value.trim();
+  const p=document.getElementById('new_pass').value;
+  const p2=document.getElementById('new_pass2').value;
+  if(!u){showToast('❌ Kullanıcı adı boş olamaz!',true);return;}
+  if(p.length<6){showToast('❌ Şifre en az 6 karakter olmalı!',true);return;}
+  if(p!==p2){showToast('❌ Şifreler eşleşmiyor!',true);return;}
+  localStorage.setItem(CREDS_KEY,JSON.stringify({user:u,pass:p}));
+  showToast('✅ Şifre güncellendi! Bir sonraki girişte yeni şifrenizi kullanın.');
+}
+function exportPricesJSON(){
+  const blob=new Blob([JSON.stringify(prices,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`insaat_fiyatlar_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  showToast('📥 JSON indirildi');
+}
+function importJSON(inp){
+  const file=inp.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.malzeme&&!data.iscilik&&!data.proje){showToast('❌ Geçersiz JSON formatı!',true);return;}
+      prices=data;savePrices();renderAll();renderStats();
+      showToast('✅ Fiyatlar yüklendi!');
+    }catch{showToast('❌ JSON okunamadı!',true);}
+  };
+  reader.readAsText(file);
+}
+function resetPrices(){
+  if(!confirm('TÜM FİYATLAR varsayılana sıfırlanacak. Emin misin?'))return;
+  prices=JSON.parse(JSON.stringify(DEFAULT_PRICES));
+  savePrices();renderAll();renderStats();
+  showToast('🔄 Fiyatlar sıfırlandı');
+}
+
+// ============================================================
+// YARDIMCI
+// ============================================================
+function fN(v){return new Intl.NumberFormat('tr-TR').format(v||0);}
+function fTLR(min,max){return`${fN(min)}–${fN(max)} ₺`;}
+let toastTimer=null;
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast'+(err?' err':'');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Boot
+if(sessionStorage.getItem('insaat_admin_auth')==='1'){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('mainApp').classList.add('show');
+  initApp();
+}
+</script>
+</body>
+</html>
